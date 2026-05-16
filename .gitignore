@@ -1,3 +1,5 @@
 .idea
 .venv
 .env.mongodb
+microsave.egg-info/
+**/__pycache__/
