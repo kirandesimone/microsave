@@ -3,7 +3,7 @@ from pymongo.asynchronous.database import AsyncDatabase
 
 from microsave_app.models.save import SaveEnvelope, SaveResponse
 from microsave_app.helpers.save import build_save_document
-from microsave_app.services.mongo import upsert_save, get_save
+from microsave_app.services.mongo import upsert_save, get_save, delete_save
 from microsave_app.core.mongo import get_db
 
 
@@ -45,7 +45,7 @@ async def delete(
         user_id: str, 
         save_slot: str, 
         db: AsyncDatabase = Depends(get_db)
-) -> SaveResponse:
+) -> Response:
     result = await delete_save(client_app_id, user_id, save_slot, db)
 
     if result.deleted_count == 1:

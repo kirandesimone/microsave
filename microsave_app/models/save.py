@@ -3,7 +3,7 @@ from typing import Any, Self
 
 from pydantic import BaseModel, Field, model_validator
 
-from microsave_app.models.payload_registery import PAYLOAD_MODELS
+from microsave_app.models.payload_registry import PAYLOAD_MODELS
 
 
 class SaveEnvelope(BaseModel):
