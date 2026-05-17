@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from pymongo.asynchronous.database import AsyncDatabase 
 
 from microsave_app.models.save import SaveEnvelope, SaveResponse
 from microsave_app.helpers.save import build_save_document
-from microsave_app.services.mongo import upsert_save, get_save
+from microsave_app.services.mongo import upsert_save, get_save, delete_save
 from microsave_app.core.mongo import get_db
 
 
@@ -38,5 +38,20 @@ async def load(
 
     return SaveResponse(**sd)
 
+
+@router.delete("/delete/{client_app_id}/{user_id}/{save_slot}", response_description="Delete a save")
+async def delete(
+        client_app_id: str, 
+        user_id: str, 
+        save_slot: str, 
+        db: AsyncDatabase = Depends(get_db)
+) -> Response:
+    result = await delete_save(client_app_id, user_id, save_slot, db)
+
+    if result.deleted_count == 1:
+        # no content found on success
+        return Response(status_code=204)
+
+    raise HTTPException(status_code=404, detail="Save not found")
 
 

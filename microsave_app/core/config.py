@@ -3,13 +3,13 @@
 from pathlib import Path
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from functools import lru_cache
+
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 
-
 class Settings(BaseSettings):
     """Runtime configuration for the Save Service"""
-
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / ".env.mongodb",
         env_file_encoding="utf-8",
@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     mongodb_db_name: str = Field(validation_alias="MONGODB_DB_NAME")
 
 
+@lru_cache
 def get_settings() -> Settings:
     """Cached settings accessor."""
     return Settings()

@@ -1,9 +1,5 @@
 {
-    "client_app_id": "test_app",
+    "client_app_id": "scavenger",
     "user_id": "test_user",
     "save_slot": "slot 1",
-    "schema_version": 1,
-    "payload": {
-        "data": "test payload"
-    }
 }

@@ -17,6 +17,81 @@ microsave/
 
 ## Public API
 
+## UML Diagram
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Client as Client App<br/>(e.g. scavenger)
+    participant API as FastAPI<br/>(client_router)
+    participant Env as SaveEnvelope<br/>(Pydantic)
+    participant Reg as PAYLOAD_MODELS<br/>registry
+    participant Helper as build_save_document
+    participant Svc as services.mongo
+    participant DB as MongoDB<br/>(saves collection)
+    participant Test as pytest +<br/>httpx.AsyncClient
+
+    %% ---------------- App startup ----------------
+    Note over API,DB: Startup (lifespan)
+    API->>DB: create_mongo_client(mongodb_uri)
+    API->>DB: create_indexes(db)<br/>unique (client_app_id, user_id, save_slot)
+
+    %% ---------------- POST /save ----------------
+    Client->>API: POST /save<br/>{client_app_id, user_id, save_slot,<br/>schema_version, payload}
+    API->>Env: SaveEnvelope(**body)
+    Env->>Reg: PAYLOAD_MODELS.get(client_app_id)
+    alt client_app_id not registered
+        Reg-->>Env: None
+        Env-->>API: ValueError "Unsupported client app id"
+        API-->>Client: 422 Unprocessable Entity
+    else registered (e.g. "scavenger")
+        Reg-->>Env: ScavengerPayload class
+        Env->>Env: ScavengerPayload.model_validate(payload)
+        Env-->>API: validated SaveEnvelope
+        API->>Helper: build_save_document(se)
+        Helper-->>API: SaveDocument(+created_at, updated_at)
+        API->>Svc: upsert_save(sd, db)
+        Svc->>DB: saves.update_one(<br/>{client_app_id, user_id, save_slot},<br/>{$set: doc, $setOnInsert: {created_at}},<br/>upsert=True)
+        DB-->>Svc: UpdateResult
+        Svc-->>API: ok
+        API-->>Client: 200 OK<br/>SaveResponse(updated_at, payload, ...)
+    end
+
+    %% ---------------- GET /load ----------------
+    Client->>API: GET /load/{client_app_id}/{user_id}/{save_slot}
+    API->>Svc: get_save(client_app_id, user_id, save_slot, db)
+    Svc->>DB: saves.find_one({client_app_id, user_id, save_slot})
+    alt not found
+        DB-->>Svc: None
+        Svc-->>API: None
+        API-->>Client: 404 "Save not found"
+    else found
+        DB-->>Svc: save document
+        Svc-->>API: dict
+        API-->>Client: 200 OK SaveResponse(**sd)
+    end
+
+    %% ---------------- DELETE /delete ----------------
+    Client->>API: DELETE /delete/{client_app_id}/{user_id}/{save_slot}
+    API->>Svc: delete_save(client_app_id, user_id, save_slot, db)
+    Svc->>DB: saves.delete_one({client_app_id, user_id, save_slot})
+    DB-->>Svc: DeleteResult(deleted_count)
+    alt deleted_count == 1
+        Svc-->>API: result
+        API-->>Client: 204 No Content
+    else not found
+        API-->>Client: 404 "Save not found"
+    end
+
+    %% ---------------- Unit test path ----------------
+    Note over Test,DB: Unit tests
+    Test->>API: AsyncClient.post("/save", json=fixture)
+    Note right of Test: Override Depends(get_db)<br/>with test AsyncDatabase<br/>(mongomock-motor or<br/>testcontainers Mongo)
+    API->>Svc: upsert_save(sd, test_db)
+    Svc->>DB: update_one(...) on test DB
+    DB-->>API: result
+    API-->>Test: 200 + SaveResponse
+    Test->>Test: assert response.status_code == 200<br/>assert payload round-trips
+```
 
 ## MongoDB
 

@@ -13,5 +13,6 @@ async def create_mongo_client(uri: str) -> AsyncMongoClient:
 
     return client
 
+
 def get_db(request: Request):
     return request.app.state.db

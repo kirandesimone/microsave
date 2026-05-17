@@ -32,3 +32,17 @@ async def get_save(
             "save_slot": save_slot,
         }
     )
+
+
+async def delete_save(
+    client_app_id: str, user_id: str, save_slot: str, db: AsyncDatabase
+):
+    return await db["saves"].delete_one(
+        {
+            "client_app_id": client_app_id,
+            "user_id": user_id,
+            "save_slot": save_slot,
+        }
+    )
+
+
