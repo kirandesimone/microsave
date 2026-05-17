@@ -3,7 +3,7 @@
 ## Project Structure
 
 ```
-microgeo/
+microsave/
 ├── app/
 │   ├── main.py       # app factory, lifespan, exception handlers
 │   ├── api/          # endpoints

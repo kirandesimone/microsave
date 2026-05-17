@@ -9,4 +9,8 @@ dependencies = [
     "pydantic==2.13.4",
     "pydantic-settings==2.14.1",
     "pymongo==4.17.0",
+    "uvicorn>=0.47.0",
 ]
+
+[project.scripts]
+microsave = "microsave_app.main:main"
