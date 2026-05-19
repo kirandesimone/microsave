@@ -15,6 +15,9 @@ microsave/
 └── .env
 ```
 
+## Description
+The microsave microservice is a RESTful API backed by MongoDB that persists, retrieves, and deletes user-specific JSON save states for client applications.
+
 ## How to Request Data
 This microsave service utilizes RESTful API. To request data operations (saving, loading, or deleting), execute HTTP requests to the target endpoints.
 
