@@ -15,6 +15,75 @@ microsave/
 └── .env
 ```
 
+## How to Request Data
+This microsave service utilizes RESTful API. To request data operations (saving, loading, or deleting), execute HTTP requests to the target endpoints.
+
+Available Endpoints:
+``` 
+Save State: POST /save
+Requires a JSON body containing: client_app_id, user_id, save_slot, schema_version, and the actual payload data.
+
+Load State: GET /load/{client_app_id}/{user_id}/{save_slot}
+Retrieves a previously saved state based on the provided URL path parameters.
+
+Delete State: DELETE /delete/{client_app_id}/{user_id}/{save_slot}
+Removes a specific save slot for a given user.
+```
+
+Example Calls:
+``` python
+import requests
+
+BASE_URL = "http://127.0.0.1:8000"
+
+# Example: Requesting to SAVE data
+save_payload = {
+    "client_app_id": "scavenger",
+    "user_id": "user_123",
+    "save_slot": "slot 1",
+    "schema_version": 1,
+    "payload": {
+        "data": "level_4_complete",
+        "health": 85
+    }
+}
+requests.post(f"{BASE_URL}/save", json=save_payload)
+
+# Example: Requesting to LOAD data
+requests.get(f"{BASE_URL}/load/scavenger/user_123/slot 1")
+```
+
+## How to Receive Data
+This microservice synchronously responds to requests using standard HTTP status codes and JSON payloads. Successful HTTP status codes are: 200 OK for loads and saves, 204 No Content for deletes. If the requested save does not exist, the service will return a 404 Not Found status.
+
+Example Receive and Process:
+``` python
+import requests
+
+BASE_URL = "http://127.0.0.1:8000"
+
+# 1. Execute the load request
+response = requests.get(f"{BASE_URL}/load/scavenger/user_123/slot 1")
+
+# 2. Receive and process the data based on status code
+if response.status_code == 200:
+    save_data = response.json()
+    
+    # Extract the custom payload
+    custom_data = save_data.get("payload", {})
+    last_updated = save_data.get("updated_at")
+    
+    print(f"Successfully loaded! Last saved at: {last_updated}")
+    print(f"Game State: {custom_data}")
+
+elif response.status_code == 404:
+    print("No save file found in this slot.")
+    
+else:
+    print(f"An error occurred: {response.status_code} - {response.text}")
+```
+
+
 ## Public API
 
 ## UML Diagram
